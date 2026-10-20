@@ -1,0 +1,27 @@
+# 虚拟直流电源（pyvisa-sim 设备定义，文档 §3.2）
+# SCPI 命令集与真实 PSU 一致：*IDN? / APPLy / VOLTage / CURRent / OUTPut / MEASure?
+spec: "1.0"
+devices:
+  psu3000:
+    eom:
+      TCPIP INSTR: {q: "\n", r: "\n"}
+    error: ERROR
+    dialogues:
+      - {q: "*IDN?", r: "VIRTUAL,PMU300-PSU,0,1.0"}
+      - {q: "*RST"}
+      - {q: "OUTPut ON"}
+      - {q: "OUTPut OFF"}
+      # APPLy 为完整命令匹配（值固定为 CP 条件 5.0V/0.5A，与 configs/cp_plan.yaml 一致）；
+      # 动态电压/电流编程走标准 SCPI 属性 VOLTage/CURRent。
+      - {q: "APPLy 5.0,0.5"}
+    properties:
+      volt:
+        default: 0.0
+        getter: {q: "MEASure:VOLTage:DC?", r: "{:.6f}"}
+        setter: {q: "VOLTage {:.6f}"}
+      curr:
+        default: 0.0
+        getter: {q: "MEASure:CURRent:DC?", r: "{:.6f}"}
+        setter: {q: "CURRent {:.6f}"}
+resources:
+  TCPIP0::1::inst0::INSTR: {device: psu3000}

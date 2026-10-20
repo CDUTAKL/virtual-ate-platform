@@ -1,0 +1,23 @@
+# 虚拟数字万用表（pyvisa-sim 设备定义，文档 §3.2）
+# SCPI 命令集与真实 DMM 一致：*IDN? / CONFigure / READ? / MEASure?
+# 注：SIM:INPut 是仿真桥接命令——pyvisa-sim 无法计算依赖被测物的响应，
+# 由驱动把 DUT 真值经 SCPI 写入后 READ? 原样取回，再叠加测量噪声模型。
+# 接真实仪器时删去桥接命令、READ? 直接返回仪器读数（接口不变）。
+spec: "1.0"
+devices:
+  dmm3000:
+    eom:
+      TCPIP INSTR: {q: "\n", r: "\n"}
+    error: ERROR
+    dialogues:
+      - {q: "*IDN?", r: "VIRTUAL,PMU300-DMM,0,1.0"}
+      - {q: "*RST"}
+      - {q: "CONFigure:VOLTage:DC 10,0.001"}
+      - {q: "CONFigure:CURRent:DC 1,0.001"}
+    properties:
+      reading:
+        default: 0.0
+        getter: {q: "READ?", r: "{:.6f}"}
+        setter: {q: "SIM:INPut {:.6f}"}
+resources:
+  TCPIP0::2::inst0::INSTR: {device: dmm3000}

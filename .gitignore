@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 虚拟环境
+.venv/
+
+# 生成产物（数据文件不进仓库；保留目录结构与 .gitkeep；CI artifact 留存）
+outputs/**
+!outputs/**/
+!outputs/**/.gitkeep
+
+# 仿真后端临时合并配置
+_sim_devices.yaml
+
+# 系统
+.DS_Store

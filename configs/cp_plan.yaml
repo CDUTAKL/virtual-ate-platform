@@ -1,0 +1,56 @@
+# PMU300 CP 测试计划（W2）
+# 结构对标真实机台测试程序：Test Plan → Test Flow（SETUP→EXECUTE→BINNING）→ Binning Table
+# 文档 §3.3：限值、bin 定义全部外置 YAML。
+plan:
+  lot_id: "LOT20261020A"
+  program: "PMU300_CP_v1.2"
+  flow:
+    - name: SETUP
+      items: [psu_apply_5v, dmm_config]
+    - name: EXECUTE
+      items: [VOUT1, IQ1, LINE1, VOUT2, IQ2, VOUT3, EFF3, RIPPLE3,
+              ADC_INL, TEMP25, ISD, POR, FUNC_REG, FUNC_EN, FUNC_OCP]
+    - name: BINNING
+      table: configs/bins.yaml
+
+# guardband：测试限 = 规格限内缩 k·σ_meas（文档 §3.3，σ_meas 由仪器噪声模型标定）
+guardband:
+  strategy: "sigma"
+  k: 3.0
+
+# 仪器与测量模型（文档 §3.2：±0.05% 读数噪声 + 偏移）
+measurement:
+  rel_sigma: 5.0e-4        # 读数噪声 σ（±0.05%）
+  abs_sigma_by_unit:       # 固定偏移 σ（按量纲，与读数无关项）
+    V: 5.0e-4              # 0.5 mV
+    uA: 0.02               # 20 nA
+    "%/V": 1.0e-4
+    "%": 0.02
+    mVpp: 0.1
+    LSB: 0.02
+    degC: 0.02
+
+# 测试项定义：spec 上下限照抄设计文档 §3.1 参数表（plan 加载时与 DUT 规格表校验一致性）。
+# test_num 对标 ATE 编号习惯：参数项 1001~1012，功能项 2001~2003。
+# meas_time_s 为单项测试时间（W4 测试时间优化的基数）。
+items:
+  - {name: VOUT1,    test_num: 1001, kind: PARM, unit: V,    lo: 3.234, hi: 3.366, instrument: DMM,  pin: VOUT1, meas_time_s: 0.020}
+  - {name: IQ1,      test_num: 1002, kind: PARM, unit: uA,   lo: null,  hi: 120.0, instrument: DMM,  pin: ISNS1, meas_time_s: 0.035}
+  - {name: LINE1,    test_num: 1003, kind: PARM, unit: "%/V", lo: null, hi: 0.05,  instrument: DMM,  pin: VOUT1, meas_time_s: 0.040}
+  - {name: VOUT2,    test_num: 1004, kind: PARM, unit: V,    lo: 1.764, hi: 1.836, instrument: DMM,  pin: VOUT2, meas_time_s: 0.020}
+  - {name: IQ2,      test_num: 1005, kind: PARM, unit: uA,   lo: null,  hi: 80.0,  instrument: DMM,  pin: ISNS2, meas_time_s: 0.035}
+  - {name: VOUT3,    test_num: 1006, kind: PARM, unit: V,    lo: 1.176, hi: 1.224, instrument: DMM,  pin: VOUT3, meas_time_s: 0.020}
+  - {name: EFF3,     test_num: 1007, kind: PARM, unit: "%",  lo: 85.0,  hi: null,  instrument: DMM,  pin: VOUT3, meas_time_s: 0.050}
+  - {name: RIPPLE3,  test_num: 1008, kind: PARM, unit: mVpp, lo: null,  hi: 30.0,  instrument: DMM,  pin: VOUT3, meas_time_s: 0.030}
+  - {name: ADC_INL,  test_num: 1009, kind: PARM, unit: LSB,  lo: -4.0,  hi: 4.0,   instrument: DMM,  pin: ADCOUT, meas_time_s: 0.030}
+  - {name: TEMP25,   test_num: 1010, kind: PARM, unit: degC, lo: -3.0,  hi: 3.0,   instrument: DMM,  pin: VTEMP, meas_time_s: 0.025}
+  - {name: ISD,      test_num: 1011, kind: PARM, unit: uA,   lo: null,  hi: 2.0,   instrument: DMM,  pin: VBAT, meas_time_s: 0.035}
+  - {name: POR,      test_num: 1012, kind: PARM, unit: V,    lo: 1.55,  hi: 1.75,  instrument: DMM,  pin: POR, meas_time_s: 0.025}
+  - {name: FUNC_REG, test_num: 2001, kind: FUNC, unit: null, lo: null,  hi: null,  instrument: null, pin: SDA,  meas_time_s: 0.015}
+  - {name: FUNC_EN,  test_num: 2002, kind: FUNC, unit: null, lo: null,  hi: null,  instrument: null, pin: EN,   meas_time_s: 0.015}
+  - {name: FUNC_OCP, test_num: 2003, kind: FUNC, unit: null, lo: null,  hi: null,  instrument: null, pin: CS3,  meas_time_s: 0.015}
+
+# SETUP 阶段动作（对标机台程序 SETUP：加电、量程配置），按 die 计测试时间
+setup:
+  - {name: psu_apply_5v, instrument: PSU, action: apply,    value: 5.0, limit: 0.5, meas_time_s: 0.030}
+  - {name: dmm_config,   instrument: DMM, action: configure, value: null, limit: null, meas_time_s: 0.020}

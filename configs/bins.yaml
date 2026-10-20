@@ -1,0 +1,23 @@
+# PMU300 CP bin 定义表（文档 §3.3）
+# soft bin：每个测试项 fail 映射一个 soft bin（首个 fail 项决定，按 EXECUTE 顺序）；
+# hard bin：汇总判定 —— 全过→HBin1，任一参数 fail→HBin2，功能 fail→HBin3（功能优先）。
+soft_bins:
+  - {sbin: 1,  name: PASS,        item: null}
+  - {sbin: 11, name: VOUT1_FAIL,  item: VOUT1}
+  - {sbin: 12, name: IQ1_FAIL,    item: IQ1}
+  - {sbin: 13, name: LINE1_FAIL,  item: LINE1}
+  - {sbin: 14, name: VOUT2_FAIL,  item: VOUT2}
+  - {sbin: 15, name: IQ2_FAIL,    item: IQ2}
+  - {sbin: 16, name: VOUT3_FAIL,  item: VOUT3}
+  - {sbin: 17, name: EFF3_FAIL,   item: EFF3}
+  - {sbin: 18, name: RIPPLE3_FAIL, item: RIPPLE3}
+  - {sbin: 19, name: ADC_INL_FAIL, item: ADC_INL}
+  - {sbin: 20, name: TEMP25_FAIL,  item: TEMP25}
+  - {sbin: 21, name: ISD_FAIL,     item: ISD}
+  - {sbin: 22, name: POR_FAIL,     item: POR}
+  - {sbin: 3,  name: FUNC_FAIL,    item: FUNC_ANY}   # 任一项功能 fail
+
+hard_bins:
+  - {hbin: 1, name: GOOD}
+  - {hbin: 2, name: PARAM_FAIL}
+  - {hbin: 3, name: FUNC_FAIL}
