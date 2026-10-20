@@ -114,6 +114,28 @@ class StdfFile:
         return pd.DataFrame(rows)
 
 
+def count_stdf_records(path: str | Path) -> int:
+    """只扫记录头统计记录数（U16 len + type/sub，不解析字段）——大文件秒级。
+
+    用于报告层展示"STDF 含 N 条记录"，避免为计数全量解析。
+    """
+    n = 0
+    pos = 0
+    size = Path(path).stat().st_size
+    with open(path, "rb") as f:
+        while pos < size:
+            head = f.read(4)
+            if len(head) < 4:
+                raise ValueError(f"文件尾部残留 {size - pos} 字节，不是完整记录头")
+            rec_len = struct.unpack(">H", head[:2])[0]
+            if rec_len < 4:
+                raise ValueError(f"非法记录长度 {rec_len}")
+            f.seek(rec_len - 2, 1)      # 已读 len+typ+sub 共 4 字节，跳过剩余负载
+            pos += 2 + rec_len
+            n += 1
+    return n
+
+
 def read_stdf(path: str | Path) -> StdfFile:
     """解析 STDF 文件 → StdfFile。只认本 records.py 定义的记录子集。"""
     data = Path(path).read_bytes()

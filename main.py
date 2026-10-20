@@ -9,6 +9,7 @@
 - outputs/analysis/          量产分析产物（bin 帕累托/Cpk 表/SPC 图/相关矩阵/时间优化）
 - outputs/char/              特性化产物（Shmoo 图/参数分布图）
 - outputs/fa/                FA 产物（失效签名/混淆矩阵/FA 报告）
+- outputs/report.html        自包含 HTML 测试报告（KPI + 图表 base64 内联）
 """
 
 import time
@@ -167,6 +168,17 @@ def stage_w4_char_fa() -> dict:
     return out
 
 
+def stage_w5_report() -> Path:
+    """报告层：汇总各阶段产物 → 自包含 HTML 测试报告（KPI + 图表 base64 内联）。"""
+    print("\n[W5] 生成 HTML 测试报告 ...")
+    from report import html_report
+    t0 = time.perf_counter()
+    path = html_report.run()
+    dt = time.perf_counter() - t0
+    print(f"[W5] 报告已输出: {path}（{path.stat().st_size / 1e3:.0f} KB，耗时 {dt:.1f}s）")
+    return path
+
+
 def main() -> None:
     OUTPUT_DIR.mkdir(exist_ok=True)
     t_all = time.perf_counter()
@@ -174,6 +186,7 @@ def main() -> None:
     stage_w2_cp(dies)
     stage_w3_stdf_analytics()
     stage_w4_char_fa()
+    stage_w5_report()
     print(f"\n全流程完成，总耗时 {time.perf_counter() - t_all:.1f}s。")
 
 

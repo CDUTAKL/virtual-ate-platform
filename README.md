@@ -23,9 +23,12 @@ uv venv && uv pip install numpy pandas matplotlib pyyaml pytest pyvisa pyvisa-si
 ## 运行方法
 
 ```bash
-.venv/bin/python main.py                 # 一键全流程（W1 晶圆 → W2 CP → W3 STDF+分析 → W4 特性化+FA）
-.venv/bin/python -m pytest tests/ -q     # 单元测试（113 个用例，W1 24 + W2 24 + W3 39 + W4 26）
+.venv/bin/python main.py                 # 一键全流程（W1 晶圆 → W2 CP → W3 STDF+分析 → W4 特性化+FA → 报告）
+.venv/bin/python -m pytest tests/ -q     # 单元测试（118 个用例，W1 24 + W2 24 + W3 39 + W4 26 + 报告层 5）
 ```
+
+全流程末尾自动生成 **`outputs/report.html`**：自包含 HTML 测试报告（KPI 卡 +
+图表 base64 内联，约 1.5 MB 单文件，无外部依赖）。
 
 实测运行环境：Apple Silicon Mac，Python 3.14.5（uv venv）；`python main.py` 全流程 **约 26 s**
 （W1+W2 约 2.4 s，W3 约 21 s——其中 STDF 写出 12.3 s + 读回 8.3 s，W4 约 1.2 s）。
@@ -49,7 +52,7 @@ uv venv && uv pip install numpy pandas matplotlib pyyaml pytest pyvisa pyvisa-si
 | **FA 混淆矩阵** | **对角线命中率 96.48%（目标 ≥90%），轮廓系数 0.5056** | K-Means K=5，5 失效子模式 |
 | Shmoo 失效边界 | **T≥85°C × 2 A**（DEF_TIMING 高温重载角）；DEF_DRIFT 温度两端越限 | V×T / V×Load 双图 |
 | 测试时间优化 | 主 lot **无 \|r\|>0.95 冗余对（max \|r\|=0.038）如实报告 0%**；识别→删项→5 万 die 复跑零差异机制由合成对验证 | 基线 0.460 s/die |
-| 单元测试 | **113 个全绿** | pytest |
+| 单元测试 | **118 个全绿** | pytest |
 
 ### 检出率口径与已知边界（两层报告，面试必问）
 
@@ -120,8 +123,9 @@ virtual-ate-platform/
 │   ├── cp_plan.yaml      # CP 测试计划（限值照抄文档 §3.1）
 │   └── bins.yaml         # bin 定义表
 ├── report/
-│   └── wafermap.py       # wafer map 可视化
-├── tests/                # 113 个 pytest 用例
+│   ├── wafermap.py       # wafer map 可视化
+│   └── html_report.py    # 一键 HTML 测试报告（KPI 卡 + 图表 base64 内联，§3.8）
+├── tests/                # 118 个 pytest 用例
 ├── outputs/              # 全部产物（gitignore，CI artifact 留存）
 └── main.py               # 一键入口（W1+W2+W3+W4 全流程）
 ```
