@@ -27,7 +27,7 @@ jobs:
 
       # 先跑全流程生成 outputs/（固定种子）：一批测试（SPC/FA/分布等）消费
       # 流水线产物，全新检出时 outputs/ 不存在，必须先由 main.py 产出。
-      - name: Cross-platform fingerprint (temp diagnostic)
+      - name: Cross-platform fingerprint (diagnostic, see tools/fingerprint.py)
         run: uv run python -c "import sys; sys.path.insert(0,'.'); exec(open('tools/fingerprint.py').read())"
 
       - name: Run full pipeline (fixed seed, reproducible)
