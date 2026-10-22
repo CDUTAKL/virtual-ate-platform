@@ -30,8 +30,8 @@ uv venv && uv pip install numpy pandas matplotlib pyyaml pytest pyvisa pyvisa-si
 全流程末尾自动生成 **`outputs/report.html`**：自包含 HTML 测试报告（KPI 卡 +
 图表 base64 内联，约 1.5 MB 单文件，无外部依赖）。
 
-实测运行环境：Apple Silicon Mac，Python 3.14.5（uv venv）；`python main.py` 全流程 **约 26 s**
-（W1+W2 约 2.4 s，W3 约 21 s——其中 STDF 写出 12.3 s + 读回 8.3 s，W4 约 1.2 s）。
+实测运行环境：Apple Silicon Mac，Python 3.14.5（uv venv）；`python main.py` 全流程 **约 45 s**
+（W1+W2 约 2.4 s，W3 约 41 s——其中 STDF 写出 23.8 s + 读回 16.2 s，W4 约 1.2 s）。
 
 ## 数据口径（全部实测，seed=20261020 可复现；2026-10-21 回填）
 
@@ -47,12 +47,12 @@ uv venv && uv pip install numpy pandas matplotlib pyyaml pytest pyvisa pyvisa-si
 | 潜伏缺陷逃逸 | **2,116 / 2,122** | DRIFT/TIMING 需多温/FT/Shmoo |
 | Cpk 最低参数 | **VOUT3 Cpk=1.02 / Ppk=1.00** | 测试限口径，HBin1；其余 11 项 ≥1.33 合格 |
 | guardband 余量最小 Top3 | VOUT3 1.00σ / VOUT1 1.01σ / VOUT2 1.15σ | 漂移风险最高 |
-| **STDF 文件** | **52.5 MB，850,098 条记录**（写出 12.3 s + 读回 8.3 s） | V4 二进制自实现，round-trip 逐字段比对 |
+| **STDF 文件** | **47.7 MB，850,098 条记录**（写出 23.8 s + 读回 16.2 s） | V4 二进制自实现，符合 SEMI STDF V4 规范（REC_LEN/C*n/记录类型号/标志位经规范原文逐条核对），pystdf 独立解析字段级一致 |
 | SPC 演示 | 注入 +21 mV 爬坡（W13~19）→ **第 19 片触发规则①**；干净 lot 零报警 | I-MR + Western Electric |
 | **FA 混淆矩阵** | **对角线命中率 96.48%（目标 ≥90%），轮廓系数 0.5056** | K-Means K=5，5 失效子模式 |
 | Shmoo 失效边界 | **T≥85°C × 2 A**（DEF_TIMING 高温重载角）；DEF_DRIFT 温度两端越限 | V×T / V×Load 双图 |
 | 测试时间优化 | 主 lot **无 \|r\|>0.95 冗余对（max \|r\|=0.038）如实报告 0%**；识别→删项→5 万 die 复跑零差异机制由合成对验证 | 基线 0.460 s/die |
-| 单元测试 | **118 个全绿** | pytest |
+| 单元测试 | **122 个全绿** | pytest |
 
 ### 检出率口径与已知边界（两层报告，面试必问）
 

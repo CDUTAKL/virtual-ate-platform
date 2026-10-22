@@ -73,17 +73,17 @@ def write_cp_stdf(results: pd.DataFrame, meta: CpMeta, path: str | Path,
         "NODE_NAM": meta.node_name, "TSTR_TYP": meta.tester_type,
         "JOB_NAM": meta.job_name, "OPER_NAM": meta.operator,
         "EXEC_TYP": meta.exec_type, "EXEC_VER": meta.exec_ver,
-        "TEST_COD": "CP", "TEST_TEMP": meta.test_temp,
-        "PKG_TYP": "QFN24", "HAND_TYP": "VIRTUAL_PROBER",
+        "TEST_COD": "CP", "TST_TEMP": meta.test_temp,
+        "PKG_TYP": "QFN24",
     }))
-    emit(Record(1, 30, {"HEAD_NUM": 1, "SITE_GRP": 1, "SITE_NUM": [1],
+    emit(Record(1, 80, {"HEAD_NUM": 1, "SITE_GRP": 1, "SITE_NUM": [1],
                         "HAND_TYP": "VIRTUAL_PROBER"}))
     for pmr_indx, phys, log in meta.pins:
-        emit(Record(1, 62, {"PMR_INDX": pmr_indx, "CHANN_TYP": 0,
-                            "CHANN_NUM": pmr_indx, "PHYS_NAM": phys,
+        emit(Record(1, 60, {"PMR_INDX": pmr_indx, "CHAN_TYP": 0,
+                            "CHAN_NAM": "", "PHY_NAM": phys,
                             "LOG_NAM": log, "HEAD_NUM": 1, "SITE_NUM": 1}))
     good_total = int((hard == 1).sum())
-    emit(Record(1, 60, {"HEAD_NUM": 1, "SITE_NUM": 1, "PART_CNT": len(results),
+    emit(Record(1, 30, {"HEAD_NUM": 1, "SITE_NUM": 1, "PART_CNT": len(results),
                         "RTST_CNT": 0, "ABRT_CNT": 0, "GOOD_CNT": good_total,
                         "FUNC_CNT": good_total}))
 
@@ -120,9 +120,9 @@ def write_cp_stdf(results: pd.DataFrame, meta: CpMeta, path: str | Path,
                 it = meta.items[name]
                 v = float(meas_cols[name][row_i])
                 passed = bool(results[f"{name}_pass"].iloc[row_i])
-                emit(Record(10, 10, {
+                emit(Record(15, 10, {
                     "TEST_NUM": it["test_num"], "HEAD_NUM": 1, "SITE_NUM": 1,
-                    "TEST_FLG": 0x80 if not passed else 0x00,
+                    "TEST_FLG": 0x01 if not passed else 0x00,
                     "PARM_FLG": 0x00,
                     "RESULT": v, "TEST_TXT": name, "ALARM_ID": "",
                     "RES_SCAL": 0, "LLM_SCAL": 0, "HLM_SCAL": 0,
@@ -137,7 +137,7 @@ def write_cp_stdf(results: pd.DataFrame, meta: CpMeta, path: str | Path,
                 passed = bool(func_cols[name][row_i])
                 emit(Record(15, 20, {
                     "TEST_NUM": it["test_num"], "HEAD_NUM": 1, "SITE_NUM": 1,
-                    "TEST_FLG": 0x80 if not passed else 0x00,
+                    "TEST_FLG": 0x01 if not passed else 0x00,
                     "OPT_FLAG": 0x00, "CYCL_CNT": 0, "REL_VADR": 0,
                     "REPT_CNT": 0, "NUM_FAIL": 0, "XFAIL_ADR": 0, "YFAIL_ADR": 0,
                     "VECT_OFF": 0, "RTN_INDX": [], "RTN_STAT": [],
@@ -151,7 +151,7 @@ def write_cp_stdf(results: pd.DataFrame, meta: CpMeta, path: str | Path,
             y = int(results["y"].iloc[row_i])
             emit(Record(5, 20, {
                 "HEAD_NUM": 1, "SITE_NUM": 1,
-                "PART_FLG": 0x80 if fail else 0x00,
+                "PART_FLG": 0x10 if fail else 0x00,
                 "NUM_TEST": len(meta.exec_order),
                 "HARD_BIN": hbin, "SOFT_BIN": sbin,
                 "X_COORD": x, "Y_COORD": y,
@@ -184,7 +184,7 @@ def write_cp_stdf(results: pd.DataFrame, meta: CpMeta, path: str | Path,
             "TEST_TYP": "P" if it["kind"] == "PARM" else "F",
             "TEST_NUM": it["test_num"], "EXEC_CNT": len(results),
             "FAIL_CNT": fail_cnt, "ALRM_CNT": 0, "TEST_NAM": name,
-            "ALRM_ID": "", "OPT_FLAG": 0x00,
+            "SEQ_NAME": "", "TEST_LBL": "", "OPT_FLAG": 0x13,  # 保留位 bit3/bit6-7 规范要求为 1
             "TEST_TIM": float(it["meas_time_s"]), "TEST_MIN": vmin,
             "TEST_MAX": vmax, "TST_SUMS": sums, "TST_SQRS": sqrs,
         }))

@@ -29,12 +29,13 @@ def small_env(tmp_path_factory):
 
 
 def test_file_header_valid(small_env):
-    """文件头合法性：首记录 FAR(0,10)，REC_LEN/版本正确。"""
+    """文件头合法性：首记录 FAR(0,10)，REC_LEN/版本正确（标准：REC_LEN 只计数据体）。"""
     _, path = small_env
     head = path.read_bytes()[:6]
     rec_len = struct.unpack(">H", head[:2])[0]
-    assert rec_len == 4                       # FAR 负载 = CPU_TYPE + STDF_VER
+    assert rec_len == 2                       # FAR 数据体 = CPU_TYPE + STDF_VER
     assert head[2] == 0 and head[3] == 10     # FAR (0,10)
+    assert path.read_bytes()[:6] == bytes.fromhex("00 02 00 0A 02 04")
     sf = read_stdf(path)
     assert sf.first("FAR")["STDF_VER"] == 4
 

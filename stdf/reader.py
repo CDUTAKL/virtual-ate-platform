@@ -59,7 +59,8 @@ class StdfFile:
                 if r.fields["TEST_TXT"] not in ptr_seq:
                     ptr_seq.append(r.fields["TEST_TXT"])
             elif r.name == "FTR" and cur is not None:
-                cur[f"F::{r.fields['TEST_TXT']}"] = not (r.fields["TEST_FLG"] & 0x80)
+                # TEST_FLG bit7(0x01)=fail（规范）
+                cur[f"F::{r.fields['TEST_TXT']}"] = not (r.fields["TEST_FLG"] & 0x01)
             elif r.name == "PRR" and cur is not None:
                 f = r.fields
                 cur.update({"x": f["X_COORD"], "y": f["Y_COORD"],
@@ -81,7 +82,7 @@ class StdfFile:
     def ptr_table(self) -> pd.DataFrame:
         """全部 PTR 记录 → DataFrame（逐 die 逐参数一行）。"""
         rows = []
-        for r in self.by_type(10, 10):
+        for r in self.by_type(15, 10):
             f = r.fields
             rows.append({
                 "test_num": f["TEST_NUM"], "test_txt": f["TEST_TXT"],
@@ -118,6 +119,7 @@ def count_stdf_records(path: str | Path) -> int:
     """只扫记录头统计记录数（U16 len + type/sub，不解析字段）——大文件秒级。
 
     用于报告层展示"STDF 含 N 条记录"，避免为计数全量解析。
+    REC_LEN 只计数据体（标准），一条记录占 4 + REC_LEN 字节。
     """
     n = 0
     pos = 0
@@ -128,10 +130,8 @@ def count_stdf_records(path: str | Path) -> int:
             if len(head) < 4:
                 raise ValueError(f"文件尾部残留 {size - pos} 字节，不是完整记录头")
             rec_len = struct.unpack(">H", head[:2])[0]
-            if rec_len < 4:
-                raise ValueError(f"非法记录长度 {rec_len}")
-            f.seek(rec_len - 2, 1)      # 已读 len+typ+sub 共 4 字节，跳过剩余负载
-            pos += 2 + rec_len
+            f.seek(rec_len, 1)          # 已读 4 字节头，跳过 REC_LEN 字节数据体
+            pos += 4 + rec_len
             n += 1
     return n
 
@@ -148,12 +148,12 @@ def read_stdf(path: str | Path) -> StdfFile:
         rec_len = struct.unpack(">H", data[pos:pos + 2])[0]
         typ = data[pos + 2]
         sub = data[pos + 3]
-        payload = data[pos + 4: pos + 2 + rec_len]
-        if len(payload) != rec_len - 2:
-            raise ValueError(f"记录({typ},{sub}) 截断：声明 {rec_len - 2} 字节，"
+        payload = data[pos + 4: pos + 4 + rec_len]
+        if len(payload) != rec_len:
+            raise ValueError(f"记录({typ},{sub}) 截断：声明 {rec_len} 字节，"
                              f"实际 {len(payload)}")
         if (typ, sub) not in RECORD_NAMES:
             raise ValueError(f"未支持的记录类型 ({typ},{sub})")
         records.append(Record.from_payload(typ, sub, payload))
-        pos += 2 + rec_len
+        pos += 4 + rec_len
     return StdfFile(records)
