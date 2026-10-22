@@ -25,11 +25,20 @@ jobs:
           uv pip install numpy pandas matplotlib pyyaml pytest \
             pyvisa pyvisa-sim pyarrow scipy scikit-learn jinja2
 
+      # 先跑全流程生成 outputs/（固定种子）：一批测试（SPC/FA/分布等）消费
+      # 流水线产物，全新检出时 outputs/ 不存在，必须先由 main.py 产出。
+      - name: Run full pipeline (fixed seed, reproducible)
+        run: uv run python main.py
+
       - name: Run unit tests
         run: uv run pytest -q
 
-      - name: Run full pipeline (fixed seed, reproducible)
-        run: uv run python main.py
+      # 快速校验：pytest 之后产物仍完整（防止测试意外改动 outputs/）
+      - name: Verify pipeline artifacts
+        run: |
+          test -s outputs/cp_results.parquet
+          test -s outputs/lot_cp.stdf
+          test -s outputs/report.html
 
       - name: Upload outputs artifact
         uses: actions/upload-artifact@v4
